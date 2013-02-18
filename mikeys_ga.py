@@ -106,29 +106,57 @@ def GA(group,name):
             
             
 def APP_LAUNCH():
+        if xbmc.getCondVisibility('system.platform.osx'):
+            if xbmc.getCondVisibility('system.platform.atv2'):
+                log_path = '/var/mobile/Library/Preferences'
+                log = os.path.join(log_path, 'xbmc.log')
+                logfile = open(log, 'r').read()
+            else:
+                log_path = os.path.join(os.path.expanduser('~'), 'Library/Logs')
+                log = os.path.join(log_path, 'xbmc.log')
+                logfile = open(log, 'r').read()
+        elif xbmc.getCondVisibility('system.platform.ios'):
+            log_path = '/var/mobile/Library/Preferences'
+            log = os.path.join(log_path, 'xbmc.log')
+            logfile = open(log, 'r').read()
+        elif xbmc.getCondVisibility('system.platform.windows'):
+            log_path = xbmc.translatePath('special://home')
+            log = os.path.join(log_path, 'xbmc.log')
+            logfile = open(log, 'r').read()
+        elif xbmc.getCondVisibility('system.platform.linux'):
+            log_path = xbmc.translatePath('special://home/temp')
+            log = os.path.join(log_path, 'xbmc.log')
+            logfile = open(log, 'r').read()
+        else:
+            logfile='Starting XBMC (Unknown Git:.+?Platform: Unknown. Built.+?'
         print '==========================   '+PATH+' '+VERSION+'   =========================='
         try:
-            try:
-                from hashlib import md5
-            except:
-                from md5 import md5
-            from random import randint
-            import time
-            from urllib import unquote, quote
-            from os import environ
-            from hashlib import sha1
-            import platform
-            VISITOR = ADDON.getSetting('visitor_ga')
-            try: 
-                PLATFORM=platform.system()+' '+platform.release()
-            except: 
-                PLATFORM=platform.system()
+            from hashlib import md5
+        except:
+            from md5 import md5
+        from random import randint
+        import time
+        from urllib import unquote, quote
+        from os import environ
+        from hashlib import sha1
+        import platform
+        VISITOR = ADDON.getSetting('visitor_ga')
+        match=re.compile('Starting XBMC \((.+?) Git:.+?Platform: (.+?)\. Built.+?').findall(logfile)
+        for build, PLATFORM in match:
+            if re.search('12.0',build,re.IGNORECASE): 
+                build="Frodo" 
+            if re.search('11.0',build,re.IGNORECASE): 
+                build="Eden" 
+            if re.search('13.0',build,re.IGNORECASE): 
+                build="Gotham" 
+            print build
+            print PLATFORM
             utm_gif_location = "http://www.google-analytics.com/__utm.gif"
             utm_track = utm_gif_location + "?" + \
                     "utmwv=" + VERSION + \
                     "&utmn=" + str(randint(0, 0x7fffffff)) + \
                     "&utmt=" + "event" + \
-                    "&utme="+ quote("5(app*launch*"+PLATFORM+")")+\
+                    "&utme="+ quote("5(APP LAUNCH*"+build+"*"+PLATFORM+")")+\
                     "&utmp=" + quote(PATH) + \
                     "&utmac=" + UATRACK + \
                     "&utmcc=__utma=%s" % ".".join(["1", VISITOR, VISITOR, VISITOR,VISITOR,"2"])
@@ -137,7 +165,4 @@ def APP_LAUNCH():
                 send_request_to_google_analytics(utm_track)
             except:
                 print "============================  CANNOT POST APP LAUNCH TRACK EVENT ============================" 
-            
-        except:
-            print "================  CANNOT POST TO ANALYTICS  ================" 
 checkGA()
